@@ -1,0 +1,129 @@
+
+#define PIN_LED    15
+#define PIN_BUTTON 13
+byte ledBarPins[] = {16, 17, 18, 19, 20, 21, 22, 26, 27, 28};
+int ledBarCount = 9;
+int ledBarSetHigh;
+
+
+void setup() {
+    //serial setup
+  Serial.begin(9600);
+
+  //led bar setup
+  for (int i =0; i <= ledBarCount; i++){
+    pinMode(ledBarPins[i], OUTPUT);
+  }
+
+  // pin led setup
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_BUTTON, INPUT);
+
+
+  ledBarSetHigh = 0;
+
+
+}
+
+// main loop
+// resets ledBarLights if they were interrupted
+
+void loop() {
+
+  if (!ledBarSetHigh) {
+      for (int i = 0; i <= ledBarCount; i++){
+        digitalWrite(ledBarPins[i],HIGH);
+        delay(250);
+    }
+    ledBarSetHigh = 1;
+    Serial.print("ledBarSetHigh = 1 ");
+  }
+
+  //checks for button press to start large countdown and start turning led bar lights off at 10% of the timer.
+  //if button is pressed again starts Break countdown. I still need to make a quick for loop that checks for lights on or just makes sure they're all off for the break timer
+  //if button is pressed and shortly held, exits and resets led bar.
+  if (digitalRead(PIN_BUTTON) == LOW) {
+    delay(200);
+    Serial.print("PIN_BUTTON =");
+    Serial.println(digitalRead(PIN_BUTTON));
+
+    countdown25();
+    delay(100);
+    if (digitalRead(PIN_BUTTON) != LOW) {
+      countdown5();
+    }
+    Serial.print("Broke main while loop = ) ");
+
+    delay(1000);
+  }else{
+    digitalWrite(PIN_LED,LOW);
+  }
+}
+
+//need to adjust for 25 minute / 5 minute
+long countdown25() {
+  long countdownSecs = 20;
+  long start = millis() / 1000;
+  long current = millis() / 1000;
+  long endSec = start + countdownSecs;
+
+  while (current < endSec && digitalRead(PIN_BUTTON) == HIGH) {
+    current = millis() / 1000;
+    int ledBarCurrent = (((int)current - (int)start)) * 10 / (((int)endSec - (int)start)) * 10;
+
+    Serial.print("current - start = ");
+    Serial.println(current - start);
+
+    Serial.print("endsec - start = ");
+    Serial.println(endSec - start);
+
+    Serial.print("(current - start) / (endsec - start)  = ");
+    Serial.println((current - start) / (endSec - start) * 10);
+
+    Serial.print("ledBarCurrent = ");
+    Serial.println(ledBarCurrent);
+
+    digitalWrite(ledBarPins[ledBarCurrent / 10],LOW);
+
+    
+    Serial.print("digitalWrite(ledBarPins[ledBarCurrent],LOW); = ");
+    Serial.println(digitalRead(ledBarPins[ledBarCurrent]));
+
+
+    digitalWrite(PIN_LED,HIGH);
+        delay(500);
+    digitalWrite(PIN_LED,LOW);
+        delay(500);
+
+    
+  }
+  ledBarSetHigh = 0;
+  Serial.println("countdown25 ledBarSetHigh = 0 ");
+
+
+  return current;
+}
+
+
+long countdown5() {
+  long countdownSecs = 10;
+  long start = millis() / 1000;
+  long current = millis() / 1000;
+  long endSec = start + countdownSecs;
+
+  while (current < endSec && digitalRead(PIN_BUTTON) == HIGH) {
+    current = millis() / 1000;
+    int ledBarCurrent = (((int)current - (int)start)) * 10 / (((int)endSec - (int)start)) * 10;
+
+    digitalWrite(ledBarPins[ledBarCurrent / 10],HIGH);
+
+    digitalWrite(PIN_LED,HIGH);
+        delay(500);
+    digitalWrite(PIN_LED,LOW);
+        delay(500);
+  }
+  ledBarSetHigh = 1;
+  Serial.println("countdown5 ledBarSetHigh = 1 ");
+
+  return current;
+}
